@@ -7,12 +7,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.text.format.Formatter;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresPermission;
@@ -227,8 +227,8 @@ public final class NetworkUtils {
             return inetAddress != null;
         } catch (UnknownHostException e) {
             e.printStackTrace();
+            return false;
         }
-        return false;
     }
 
     /**
@@ -251,7 +251,7 @@ public final class NetworkUtils {
                 return (boolean) getMobileDataEnabledMethod.invoke(tm);
             }
         } catch (Exception e) {
-            Log.e("NetworkUtils", "getMobileDataEnabled: ", e);
+            e.printStackTrace();
         }
         return false;
     }
@@ -659,6 +659,27 @@ public final class NetworkUtils {
         WifiManager wm = (WifiManager) Utils.getApp().getSystemService(Context.WIFI_SERVICE);
         if (wm == null) return "";
         return Formatter.formatIpAddress(wm.getDhcpInfo().serverAddress);
+    }
+
+    /**
+     * Return the ssid.
+     *
+     * @return the ssid.
+     */
+    @RequiresPermission(ACCESS_WIFI_STATE)
+    public static String getSSID() {
+        WifiManager wm = (WifiManager) Utils.getApp().getApplicationContext().getSystemService(WIFI_SERVICE);
+        if (wm == null) return "";
+        WifiInfo wi = wm.getConnectionInfo();
+        if (wi == null) return "";
+        String ssid = wi.getSSID();
+        if (TextUtils.isEmpty(ssid)) {
+            return "";
+        }
+        if (ssid.length() > 2 && ssid.charAt(0) == '"' && ssid.charAt(ssid.length() - 1) == '"') {
+            return ssid.substring(1, ssid.length() - 1);
+        }
+        return ssid;
     }
 
     /**
